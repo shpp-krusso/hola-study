@@ -4,7 +4,6 @@ var message = 'Hello World!';
 //The url we want is: 'www.random.org/integers/?num=1&min=1&max=10&col=1&base=10&format=plain&rnd=new'
 var options = {
   family: '4',
-  method: 'GET',
   path: '/echo?message=' + encodeURI(message),
   port: '8080',
 };
