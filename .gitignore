@@ -1,2 +1,10 @@
-*.xml
-*.iml
+*
+
+!*.js
+!*.json
+!*.html
+!*.css
+!*.jpg
+!*.jpeg
+!*.png
+!*.bmp
