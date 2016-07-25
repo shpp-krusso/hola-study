@@ -41,10 +41,13 @@
             list-style-type: none;
             margin: 0;
             padding: 0;
+            width: 70%;
+            float: left;
         }
 
         #messages li {
             padding: 5px 10px;
+
         }
 
         #messages li:nth-child(odd) {
@@ -76,13 +79,14 @@
             font-size: small;
             color: darkviolet;
         }
+
     </style>
 </head>
 <body>
 <ul id="messages"></ul>
 <div id="nick"><input type="text" value="Your nickname: " style="margin: auto"></div>
 <div id="online-div">
-    <ul id="online-ul">Online:</ul>
+    <ul id="online-ul" id="online-ul">Online:</ul>
 </div>
 <form action="">
     <input id="m" autocomplete="off"/>
@@ -113,7 +117,7 @@
     });
 
     socket.on('member connected/disconnected', function (msg) {
-        $('#messages').append($('<li style="color: darkred">').text(msg));
+        $('#messages').append($('<li style="color: darkgreen">').text(msg));
     });
 
     document.getElementById('m').addEventListener('keyup', function() {
@@ -134,10 +138,16 @@
     });
 
     socket.on('refresh onlineUsers', function(msg) {
+        console.log('refresh online');
         $('#online-ul').empty();
+        $('#online-ul').text('Online:');
         for (var i = 0; i < msg.length; i++) {
             $('#online-ul').append($('<li>').text(msg[i]));
         }
+    });
+
+    socket.on('private message',function(msg) {
+        $('#messages').append($('<li style="font-weight: bold; color: red">').text(msg));
     });
 </script>
 

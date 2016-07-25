@@ -6,7 +6,8 @@ app.get('/', function (req, res) {
     res.sendFile('/home/kocmuk/hola-study/day5-nodejs-basics/chat-socket/index.html');
 });
 
-var nicknames = [];
+var nicknamesById = [];
+var idByNicknames = [];
 var usersTypingNow = [];
 
 io.on('connection', function (socket) {
@@ -21,17 +22,17 @@ io.on('connection', function (socket) {
         handleChatMessage(this, id, msg);
     });
 
-    socket.on('nickname', function(name) {
+    socket.on('nickname', function (name) {
         userIdentification(this, id, name);
-        refreshOnlineUsersInformation(this);
+        refreshOnlineUsersInformation();
     });
 
-    socket.on('user is typing', function() {
-        usersTypingNow[id] = nicknames[id];
+    socket.on('user is typing', function () {
+        usersTypingNow[id] = nicknamesById[id];
         refreshUserTypingInfo(this);
     });
 
-    socket.on('user finished typing', function() {
+    socket.on('user finished typing', function () {
         delete usersTypingNow[id];
         refreshUserTypingInfo(this);
     });
@@ -43,43 +44,65 @@ http.listen(3000, function () {
 });
 
 function handleDisconnectEvent(socket, id) {
-    var nick = '';
-    nick += (nicknames[id] == 'undefined') ? '' : nicknames[id];
-    socket.broadcast.emit('member connected/disconnected', nick.toString() + ' had been disconnected');
-    delete (nicknames[id]);
-    refreshOnlineUsersInformation(socket);
+    if (nicknamesById[id]) {
+        var nick = nicknamesById[id];
+        socket.broadcast.emit('member connected/disconnected', nick.toString() + ' had been disconnected');
+        delete (idByNicknames[nick]);
+        delete (nicknamesById[id]);
+    }
+    refreshOnlineUsersInformation();
     console.log('user disconnected');
 }
 
 function handleChatMessage(socket, id, msg) {
-    socket.broadcast.emit('chat message', nicknames[id] + ' say: ' + msg);
+    if(isPrivateMessage(msg)) {
+        sendMessageToParticularUsers(socket, msg);
+    } else {
+        socket.broadcast.emit('chat message', nicknamesById[id] + ' say: ' + msg);
+    }
 }
 
 function userIdentification(socket, id, name) {
-    nicknames[id] = name;
-    socket.broadcast.emit('member connected/disconnected', nicknames[id] + ' had been come.');
+    nicknamesById[id] = name;
+    idByNicknames[name] = id;
+    socket.broadcast.emit('member connected/disconnected', name + ' had been come.');
 }
 
 function refreshUserTypingInfo(socket) {
     var msg = '';
-    for(var propName in usersTypingNow) {
-        if(usersTypingNow.hasOwnProperty(propName)) {
-            var propValue = usersTypingNow[propName];
-            msg += (propValue) ? (propValue) + ' ' : '';
-        }
-    }
+    for(var id in usersTypingNow) {
+        msg += usersTypingNow[id] + ' ';
+    };
+
     msg += (msg) ? 'typing' : '';
     socket.broadcast.emit('user is typing', msg);
 }
 
-function refreshOnlineUsersInformation(socket) {
+function refreshOnlineUsersInformation() {
     var onlineUsers = [];
-    for(var propName in nicknames) {
-        if(nicknames.hasOwnProperty(propName)) {
-            var propValue = nicknames[propName];
-            if (propValue)
-            onlineUsers.push(propValue);
+    for (var name in idByNicknames) {
+        if (name) {
+            onlineUsers.push(name);
         }
     }
-    socket.emit('refresh onlineUsers', onlineUsers);
+    io.emit('refresh onlineUsers', onlineUsers);
+}
+
+function isPrivateMessage(msg) {
+    var hasRecipients = msg.search(/@<.*?>/g);
+    return (hasRecipients != -1);
+}
+
+function sendMessageToParticularUsers(socket, msg) {
+    var recipients = msg.match(/@<.*?>/g);
+    recipients.forEach(function(elem) {
+        elem = elem.slice(2, elem.length - 1);
+        var userId = idByNicknames[elem];
+        if (userId) {
+            socket.broadcast.to(userId).emit('private message', msg);
+        }
+    });
+
+
+
 }
