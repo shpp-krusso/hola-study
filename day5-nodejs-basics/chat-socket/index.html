@@ -73,7 +73,7 @@
             font-size: x-small;
         }
 
-        #online-div{
+        #online-div {
             float: right;
             width: 10%;
             font-size: small;
@@ -84,7 +84,7 @@
 </head>
 <body>
 <ul id="messages"></ul>
-<div id="nick"><input type="text" value="Your nickname: " style="margin: auto"></div>
+<div id="nick"><input type="text"  value="Your nickname:" style="margin: auto"></div>
 <div id="online-div">
     <ul id="online-ul" id="online-ul">Online:</ul>
 </div>
@@ -100,7 +100,7 @@
 
     $('form').submit(function () {
         socket.emit('chat message', $('#m').val());
-        $('#messages').append($('<li>').text($('#m').val()));
+        $('#messages').append($('<li>').text('You say: ' + $('#m').val()));
         $('#m').val('');
         return false;
     });
@@ -112,6 +112,10 @@
         }
     });
 
+    document.getElementById('nick').firstElementChild.addEventListener('focus', function () {
+        this.value = '';
+    });
+
     socket.on('chat message', function (msg) {
         $('#messages').append($('<li>').text(msg));
     });
@@ -120,11 +124,11 @@
         $('#messages').append($('<li style="color: darkgreen">').text(msg));
     });
 
-    document.getElementById('m').addEventListener('keyup', function() {
+    document.getElementById('m').addEventListener('keyup', function () {
         socket.emit('user is typing', '');
     });
 
-    document.getElementById('m').addEventListener('blur', function() {
+    document.getElementById('m').addEventListener('blur', function () {
         socket.emit('user finished typing', '');
     });
 
@@ -137,17 +141,30 @@
         $('#isTyping').html(msg);
     });
 
-    socket.on('refresh onlineUsers', function(msg) {
+    socket.on('refresh onlineUsers', function (msg) {
         console.log('refresh online');
         $('#online-ul').empty();
         $('#online-ul').text('Online:');
         for (var i = 0; i < msg.length; i++) {
-            $('#online-ul').append($('<li>').text(msg[i]));
+            var li = document.createElement('li')
+            li.innerHTML = msg[i];
+            $('#online-ul').append(li);
+            li.addEventListener('click', function () {
+                $('#m').val('@<' + this.innerHTML + '> ' + $('#m').val());
+            });
+            li.addEventListener('mouseover', function () {
+                $(this).css('cursor', 'pointer');
+                $(this).css('text-decoration', 'underline');
+            });
+            li.addEventListener('mouseout', function () {
+                $(this).css('text-decoration', 'none');
+            });
         }
     });
 
-    socket.on('private message',function(msg) {
+    socket.on('private message', function (msg) {
         $('#messages').append($('<li style="font-weight: bold; color: red">').text(msg));
     });
+
 </script>
 
