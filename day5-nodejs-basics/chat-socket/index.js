@@ -39,14 +39,14 @@ io.on('connection', function (socket) {
 });
 
 
-http.listen(3000, function () {
-    console.log('listening on *:3000');
+http.listen(3001, function () {
+    console.log('listening on *:3001');
 });
 
 function handleDisconnectEvent(socket, id) {
     if (nicknamesById[id]) {
         var nick = nicknamesById[id];
-        socket.broadcast.emit('member connected/disconnected', nick.toString() + ' had been disconnected');
+        socket.broadcast.emit('member connected/disconnected', nick.toString() + ' has disconnected');
         delete (idByNicknames[nick]);
         delete (nicknamesById[id]);
     }
@@ -56,7 +56,7 @@ function handleDisconnectEvent(socket, id) {
 
 function handleChatMessage(socket, id, msg) {
     if(isPrivateMessage(msg)) {
-        sendMessageToParticularUsers(socket, msg);
+        sendMessageToParticularUsers(socket, id, msg);
     } else {
         socket.broadcast.emit('chat message', nicknamesById[id] + ' say: ' + msg);
     }
@@ -65,7 +65,7 @@ function handleChatMessage(socket, id, msg) {
 function userIdentification(socket, id, name) {
     nicknamesById[id] = name;
     idByNicknames[name] = id;
-    socket.broadcast.emit('member connected/disconnected', name + ' had been come.');
+    socket.broadcast.emit('member connected/disconnected', name + ' has come.');
 }
 
 function refreshUserTypingInfo(socket) {
@@ -93,13 +93,13 @@ function isPrivateMessage(msg) {
     return (hasRecipients != -1);
 }
 
-function sendMessageToParticularUsers(socket, msg) {
+function sendMessageToParticularUsers(socket, id, msg) {
     var recipients = msg.match(/@<.*?>/g);
     recipients.forEach(function(elem) {
         elem = elem.slice(2, elem.length - 1);
         var userId = idByNicknames[elem];
         if (userId) {
-            socket.broadcast.to(userId).emit('private message', msg);
+            socket.broadcast.to(userId).emit('private message', nicknamesById[id] + ' say to: ' + msg);
         }
     });
 
