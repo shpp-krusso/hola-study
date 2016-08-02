@@ -4,6 +4,7 @@ function MyLRU(capacity) {
         keyValueStorage: {},
         maxCapacity: capacity,
         getResult: function (request) {
+
             if (this.queue.length >= this.maxCapacity) {
 
                 if (this.keyValueStorage[request]) {
@@ -15,17 +16,27 @@ function MyLRU(capacity) {
                         }
                     }
                 } else {
-                    this.queue.unshift(request);
                     var removedValue = this.queue.pop();
                     delete this.keyValueStorage[removedValue];
-                    this.keyValueStorage[request] = request + ' ok';
+                    this.setValueAndAddToQueue(request);
                 }
+
             } else {
-                this.queue.unshift('request');
-                this.keyValueStorage[request] = request + 'ok ';
+                this.setValueAndAddToQueue(request);
             }
+
             return this.keyValueStorage[request];
+        },
+
+        setValueAndAddToQueue: function (value) {
+            this.queue.unshift(value);
+            this.keyValueStorage[value] = value + 'ok ';
         }
     }
 }
+
+
+
+
+
 
