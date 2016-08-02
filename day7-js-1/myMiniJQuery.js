@@ -11,10 +11,8 @@ function $(selector) {
                 this.elem.forEach(function(item) {
                     item.innerHTML = value;
                 });
-            } else {
-                if (this.elem.length == 1) {
-                    return this.elem[0].innerHTML;
-                }
+            } else {              
+                return this.elem[0].innerHTML;               
             }
         }
     }
