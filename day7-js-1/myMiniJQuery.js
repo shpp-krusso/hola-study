@@ -1,4 +1,4 @@
-sfunction $(selector) {
+function $(selector) {
 	
     return {
 
@@ -6,7 +6,7 @@ sfunction $(selector) {
             return document.querySelectorAll(selector);
         }(),
 
-        text: function (value) {
+        html: function (value) {
             if (value) {
                 this.elem.forEach(function(item) {
                     item.innerHTML = value;
