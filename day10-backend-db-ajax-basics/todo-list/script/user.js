@@ -1,21 +1,18 @@
 var taskArchive = [];
-var userId = 1;
-var url = "http://localhost:3000/";
+var user_id = 1;
+var url = "http://localhost:3000";
 var filterCondition;
-
-$.post(url, {'hi': 'helloworld'});
 
 apllyChangesAndRedrawThePage();
 
 document.getElementById('addNewTask').addEventListener('keyup', function (event) {
     switch (Number(event.keyCode)) {
         case 13:
-            var taskDefinition = this.value;
+            var task_definition = this.value;
             this.value = '';
-            if (taskDefinition !== '') {
-                var taskPattern = createNewTaskSource(taskDefinition);
-                taskPattern.id = addNewTaskPatternAndGetIdForTask(taskPattern);
-                apllyChangesAndRedrawThePage();
+            if (task_definition !== '') {
+                var taskPattern = createNewTaskSource(task_definition);
+                addNewTaskPatternAndGetIdForTask(taskPattern);
             }
             break;
 
@@ -32,16 +29,17 @@ function clearPageTaskList() {
     }
 }
 
-function redrawTasksFromArchive() {
+function redrawTasksFromArchive(taskArchive) {
     clearPageTaskList();
-
-    for (var i = 1; i < taskArchive.length; i++) {
+    for (var i = 0; i < taskArchive.length; i++) {
+        console.log(taskArchive[i]);
         drawNewTask(taskArchive[i]);
+
     }
 }
 
-function createNewTaskSource(taskDefinition) {
-    var taskPattern = {userId: userId, finished: 0, taskDefinition: taskDefinition};
+function createNewTaskSource(task_definition) {
+    var taskPattern = {user_id: user_id, finished: 0, task_definition: task_definition};
     return taskPattern;
 }
 
@@ -58,21 +56,21 @@ function createCheckBox(taskPattern) {
     var checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.className = 'main-oneTask-checkbox_todo';
-    checkbox.id = 'checkbox' + taskPattern.id;
-    checkbox.checked = taskPattern.finished ? true : false;
+    checkbox.id = 'checkbox' + taskPattern.task_id;
+    checkbox.checked = parseInt(taskPattern.finished) ? true : false;
+    console.log('checkbox.checked', checkbox.checked);
     checkbox.addEventListener('click', function () {
-        changeFinishedStatus(this);
-        apllyChangesAndRedrawThePage();
+        changeFinishedStatusOfOneTask(this);
     });
     return checkbox;
 }
 
 function createTaskDefinition(taskPattern) {
     var p = document.createElement('p');
-    p.appendChild(document.createTextNode(taskPattern.taskDefinition));
-    p.style.textDecoration = (taskPattern.finished) ? 'line-through' : 'none';
+    p.appendChild(document.createTextNode(taskPattern.task_definition));
+    p.style.textDecoration = parseInt(taskPattern.finished) ? 'line-through' : 'none';
     p.className = 'main-oneTask-p_todo';
-    p.id = 'p' + taskPattern.id;
+    p.id = 'p' + taskPattern.task_id;
     p.addEventListener('dblclick', function () {
         this.style.display = 'none';
         var inputField = document.getElementById('input' + this.id.substring(1));
@@ -85,14 +83,14 @@ function createTaskDefinition(taskPattern) {
 
 function createInputField(taskPattern) {
     var input = document.createElement('input');
-    input.type = 'taskDefinition';
+    input.type = 'task_definition';
     input.className = 'main-oneTask-hidden_todo';
-    input.id = 'input' + taskPattern.id;
+    input.id = 'input' + taskPattern.task_id;
     input.style.display = 'none';
     input.addEventListener('keyup', function (event) {
         switch (event.keyCode) {
             case 13:
-                changeTaskDefinition(this);
+                updateTaskDefinition(this);
                 this.style.display = 'none';
                 apllyChangesAndRedrawThePage();
                 break;
@@ -114,7 +112,7 @@ function createDeleteButton(taskPattern) {
     var del = document.createElement('img');
     del.src = 'img/del.png';
     del.className = 'main-oneTask-delete_todo';
-    del.id = 'del' + taskPattern.id;
+    del.id = 'del' + taskPattern.task_id;
     del.style.visibility = 'hidden';
     del.addEventListener('click', function () {
         removeTask(this.parentElement);
@@ -124,7 +122,7 @@ function createDeleteButton(taskPattern) {
 
 function createAndAppendOneTaskBody(checkbox, p, taskChangeField, del, taskPattern) {
     var div = document.createElement('div');
-    div.id = taskPattern.id;
+    div.id = taskPattern.task_id;
     div.className = 'main-oneTask_todo';
     div.appendChild(checkbox);
     div.appendChild(p);
@@ -142,10 +140,6 @@ function createAndAppendOneTaskBody(checkbox, p, taskChangeField, del, taskPatte
     });
     document.getElementById('taskList').appendChild(div);
 }
-function getIncrementedId() {
-    id++;
-    return id;
-}
 
 function reloadTaskCounter() {
     var count = 0;
@@ -157,39 +151,46 @@ function reloadTaskCounter() {
 
 function removeTask(taskElem) {
     var data = {
-        taskId: taskElem.id,
-        action: 'remove_one_task'
+        task_id: parseInt(taskElem.id)
     };
-    $.post(url, data, apllyChangesAndRedrawThePage());
+
+    console.log(typeof data.task_id);
+    $.post(url + '/remove_one_task', data, function() {
+        return apllyChangesAndRedrawThePage();
+    });
 }
 
 function getChangesFromServer() {
 
-    filterCondition = getFilterConditionFromServer();
+    filterCondition = getFilterConditionFromServer(function(cond) {
 
-    var data = {
-        userId: userId,
-        action: 'get_all_tasks',
-        filterCondition: filterCondition
-    };
+        console.log("FILTERCONDIYION", cond)
+
+        var data = {
+            user_id: user_id,
+            filterCondition: cond
+        };  
     
-    $.post(url, data, function(tasks) {
-        taskArchive = tasks;
+        $.post(url + '/get_all_tasks_according_to_filter', data, function(tasks) {
+            redrawTasksFromArchive(tasks);
+        });
     });
 }
 
 function apllyChangesAndRedrawThePage() {
     getChangesFromServer();
-    redrawTasksFromArchive();
+    // redrawTasksFromArchive();
     reloadTaskCounter();
 }
 
 function removeAllFinishedTasks() {
     var data = {
-        userId: userId,
-        action: 'remove_all_finished_tasks'
+        user_id: user_id
     };
-    $.post(url, data, apllyChangesAndRedrawThePage());
+
+    $.post(url + '/remove_all_finished_tasks', data, function() {
+        return apllyChangesAndRedrawThePage();
+    });
 }
 
 function addListenersToClearAllFinishedButton() {
@@ -204,7 +205,7 @@ function addListenersToClearAllFinishedButton() {
     });
 
     clearAllFinishedButton.addEventListener('click', function () {
-        removeAllFinishedTasks();
+        return removeAllFinishedTasks();
     });
 }
 
@@ -213,79 +214,90 @@ addListenersToClearAllFinishedButton();
 //footer-filter-active_todo
 document.getElementsByClassName('footer-filter-active_todo')[0].addEventListener('click', function () {
     var data = {
-        userId: userId,
-        action: 'update_filter-condition_to_active'
+        user_id: user_id
     };
-    $.post(url, data, apllyChangesAndRedrawThePage());
+
+    $.post(url + '/update_filter_condition_to_active', data, function() {
+        return apllyChangesAndRedrawThePage();
+    });
 });
 
 //footer-filter-all_todo
 document.getElementsByClassName('footer-filter-all_todo')[0].addEventListener('click', function () {
    var data = {
-        userId: userId,
-        action: 'update_filter-condition_to_all'
+        user_id: user_id
     };
-    $.post(url, data, apllyChangesAndRedrawThePage());
+
+    $.post(url + '/update_filter_condition_to_all', data, function() {
+        return apllyChangesAndRedrawThePage();
+    });
 });
 
 //footer-filter-completed_todo
 document.getElementsByClassName('footer-filter-completed_todo')[0].addEventListener('click', function () {
     var data = {
-        userId: userId,
-        action: 'update_filter-condition_to_finished'
+        user_id: user_id
     };
-    $.post(url, data, apllyChangesAndRedrawThePage());
+
+    $.post(url + '/update_filter_condition_to_finished', data, function() {
+        return apllyChangesAndRedrawThePage();
+    });
 });
 
 //header-mark_todo
 document.getElementsByClassName('header-mark_todo')[0].addEventListener('click', function () {
-   var status = this.checked ? 'all_finished' : 'all_active';
+   var status = this.checked ? 0 : 1;
    var data = {
-        userId: userId,
-        action: 'update_all_tasks_finished_status',
+        user_id: user_id,
         status: status
    };
-   $.post(url, data, apllyChangesAndRedrawThePage());
+
+   $.post(url + '/reverse_finished_status_off_all', data, apllyChangesAndRedrawThePage());
 });
 
 function addNewTaskPatternAndGetIdForTask(taskPattern) {
     var data = {
-        userId: userId,
+        user_id: user_id,
         finished: taskPattern.finished,
-        taskDefinition: taskPattern.taskDefinition,
+        task_definition: taskPattern.task_definition
     };
     
-    $.post(url, data, function(taskId) {
-        return taskId;
+    $.post(url + '/add_new_task_and_get_id', data, function() {
+        apllyChangesAndRedrawThePage();
     });
 }
 
-function getFilterConditionFromServer() {
+function getFilterConditionFromServer(callback) {
     var data = {
-        userId: userId,
-        action: 'get_filter_condition'
+        user_id: user_id
     };
     
-    $.post(url, data, function(cond) {
-         return cond;
+    $.post(url+ '/get_filter_condition', data, function(cond) {
+         return callback(cond);
     });
 }
 
-fuction changeFinishedStatus(checkbox) {
-    var status = checkbox.checked;
+function changeFinishedStatusOfOneTask(checkbox) {
+    var status = checkbox.checked ? 1 : 0;
     var data = {
-        taskId: checkbox.id.substring(8),
-        finished: checkbox.checked ? 1 : 0,
-        action: 'update_finished_status_of_one_task'
+        task_id: checkbox.parentElement.id,
+        finished: status
     };
-    $.post(url, data);
+
+    $.post(url + '/update_finished_status_of_one_task', data, function() {
+        console.log('update_finished_status_of_one_task', data.task_id)
+        return apllyChangesAndRedrawThePage();
+    });
 }
 
-function changeTaskDefinition(inputField) {
+function updateTaskDefinition(inputField) {
     var data = {
-        taskId: inputField.id.substring(5),
-        taskDefinition: inputField.value,
-        action: 'change_task_definition'
+        task_id: inputField.id.substring(5),
+        task_definition: inputField.value
     };
-    $.post(url, data);
+
+    $.post(url + '/update_task_definition', data, function() {
+        console.log('data.task_definition', data.task_definition);
+        return apllyChangesAndRedrawThePage();
+    });
 }
