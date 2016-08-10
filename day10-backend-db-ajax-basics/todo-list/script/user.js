@@ -1,9 +1,10 @@
-var taskArchive = [];
-var user_id = 1;
-var url = "http://localhost:3000";
+var taskArchive = [];document.cookie
+var user_id = getCookie("user_id");
 var filterCondition;
 
 apllyChangesAndRedrawThePage();
+
+document.getElementById('addNewTask').focus();
 
 document.getElementById('addNewTask').addEventListener('keyup', function (event) {
     switch (Number(event.keyCode)) {
@@ -32,7 +33,6 @@ function clearPageTaskList() {
 function redrawTasksFromArchive(taskArchive) {
     clearPageTaskList();
     for (var i = 0; i < taskArchive.length; i++) {
-        console.log(taskArchive[i]);
         drawNewTask(taskArchive[i]);
 
     }
@@ -49,7 +49,7 @@ function drawNewTask(taskPattern) {
     var taskChangeField = createInputField(taskPattern);
     var del = createDeleteButton(taskPattern);
     createAndAppendOneTaskBody(checkbox, p, taskChangeField, del, taskPattern);
-    reloadTaskCounter();
+    // reloadTaskCounter();
 }
 
 function createCheckBox(taskPattern) {
@@ -58,7 +58,6 @@ function createCheckBox(taskPattern) {
     checkbox.className = 'main-oneTask-checkbox_todo';
     checkbox.id = 'checkbox' + taskPattern.task_id;
     checkbox.checked = parseInt(taskPattern.finished) ? true : false;
-    console.log('checkbox.checked', checkbox.checked);
     checkbox.addEventListener('click', function () {
         changeFinishedStatusOfOneTask(this);
     });
@@ -142,11 +141,13 @@ function createAndAppendOneTaskBody(checkbox, p, taskChangeField, del, taskPatte
 }
 
 function reloadTaskCounter() {
-    var count = 0;
-    for (var i = 1; i < taskArchive.length; i++) {
-        count += (!taskArchive[i].finished) ? 1 : 0;
-    }
-    document.getElementById('taskCounter').innerHTML = 'Всего: ' + count;
+    var data = {
+        user_id: user_id
+    };
+
+    $.post('/get_active_task_count', data, function(count) {
+        document.getElementById('taskCounter').innerHTML = 'Всего: ' + count;
+    })
 }
 
 function removeTask(taskElem) {
@@ -154,8 +155,7 @@ function removeTask(taskElem) {
         task_id: parseInt(taskElem.id)
     };
 
-    console.log(typeof data.task_id);
-    $.post(url + '/remove_one_task', data, function() {
+    $.post('/remove_one_task', data, function() {
         return apllyChangesAndRedrawThePage();
     });
 }
@@ -164,20 +164,19 @@ function getChangesFromServer() {
 
     filterCondition = getFilterConditionFromServer(function(cond) {
 
-        console.log("FILTERCONDIYION", cond)
-
         var data = {
             user_id: user_id,
             filterCondition: cond
         };  
     
-        $.post(url + '/get_all_tasks_according_to_filter', data, function(tasks) {
+        $.post('/get_all_tasks_according_to_filter', data, function(tasks) {
             redrawTasksFromArchive(tasks);
         });
     });
 }
 
 function apllyChangesAndRedrawThePage() {
+    
     getChangesFromServer();
     // redrawTasksFromArchive();
     reloadTaskCounter();
@@ -188,7 +187,7 @@ function removeAllFinishedTasks() {
         user_id: user_id
     };
 
-    $.post(url + '/remove_all_finished_tasks', data, function() {
+    $.post('/remove_all_finished_tasks', data, function() {
         return apllyChangesAndRedrawThePage();
     });
 }
@@ -217,7 +216,7 @@ document.getElementsByClassName('footer-filter-active_todo')[0].addEventListener
         user_id: user_id
     };
 
-    $.post(url + '/update_filter_condition_to_active', data, function() {
+    $.post('/update_filter_condition_to_active', data, function() {
         return apllyChangesAndRedrawThePage();
     });
 });
@@ -228,7 +227,7 @@ document.getElementsByClassName('footer-filter-all_todo')[0].addEventListener('c
         user_id: user_id
     };
 
-    $.post(url + '/update_filter_condition_to_all', data, function() {
+    $.post('/update_filter_condition_to_all', data, function() {
         return apllyChangesAndRedrawThePage();
     });
 });
@@ -239,20 +238,20 @@ document.getElementsByClassName('footer-filter-completed_todo')[0].addEventListe
         user_id: user_id
     };
 
-    $.post(url + '/update_filter_condition_to_finished', data, function() {
+    $.post('/update_filter_condition_to_finished', data, function() {
         return apllyChangesAndRedrawThePage();
     });
 });
 
 //header-mark_todo
 document.getElementsByClassName('header-mark_todo')[0].addEventListener('click', function () {
-   var status = this.checked ? 0 : 1;
+   var status = this.checked ? 1 : 0;
    var data = {
         user_id: user_id,
         status: status
    };
 
-   $.post(url + '/reverse_finished_status_off_all', data, apllyChangesAndRedrawThePage());
+   $.post('/reverse_finished_status_off_all', data, apllyChangesAndRedrawThePage());
 });
 
 function addNewTaskPatternAndGetIdForTask(taskPattern) {
@@ -262,7 +261,7 @@ function addNewTaskPatternAndGetIdForTask(taskPattern) {
         task_definition: taskPattern.task_definition
     };
     
-    $.post(url + '/add_new_task_and_get_id', data, function() {
+    $.post('/add_new_task_and_get_id', data, function() {
         apllyChangesAndRedrawThePage();
     });
 }
@@ -272,7 +271,7 @@ function getFilterConditionFromServer(callback) {
         user_id: user_id
     };
     
-    $.post(url+ '/get_filter_condition', data, function(cond) {
+    $.post('/get_filter_condition', data, function(cond) {
          return callback(cond);
     });
 }
@@ -284,8 +283,7 @@ function changeFinishedStatusOfOneTask(checkbox) {
         finished: status
     };
 
-    $.post(url + '/update_finished_status_of_one_task', data, function() {
-        console.log('update_finished_status_of_one_task', data.task_id)
+    $.post('/update_finished_status_of_one_task', data, function() {
         return apllyChangesAndRedrawThePage();
     });
 }
@@ -296,8 +294,13 @@ function updateTaskDefinition(inputField) {
         task_definition: inputField.value
     };
 
-    $.post(url + '/update_task_definition', data, function() {
-        console.log('data.task_definition', data.task_definition);
+    $.post('/update_task_definition', data, function() {
         return apllyChangesAndRedrawThePage();
     });
+}
+
+function getCookie(name) {
+  var value = "; " + document.cookie;
+  var parts = value.split("; " + name + "=");
+  if (parts.length == 2) return parts.pop().split(";").shift();
 }

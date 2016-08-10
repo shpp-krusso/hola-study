@@ -1,0 +1,19 @@
+div {
+    margin: auto auto;
+    width: 300px;
+    height: 300px;
+    background-color: darkgrey;
+}
+
+#username {
+    margin-top: 100px;
+    margin-left: 61px;
+}
+
+#password {
+    margin: 10px 30px 10px 60px;
+}
+
+#registration {
+    margin-left: 89px;
+}
