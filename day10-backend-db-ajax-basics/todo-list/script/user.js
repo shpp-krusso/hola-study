@@ -1,8 +1,4 @@
-var taskArchive = [];document.cookie
-var user_id = getCookie("user_id");
-var filterCondition;
-
-apllyChangesAndRedrawThePage();
+redrawChangedTaskList();
 
 document.getElementById('addNewTask').focus();
 
@@ -23,24 +19,22 @@ document.getElementById('addNewTask').addEventListener('keyup', function (event)
     }
 });
 
-function clearPageTaskList() {
+function clearThePage() {
     var taskList = document.getElementById('taskList');
     while (taskList.hasChildNodes()) {
         taskList.removeChild(taskList.firstChild);
     }
 }
 
-function redrawTasksFromArchive(taskArchive) {
-    clearPageTaskList();
-    for (var i = 0; i < taskArchive.length; i++) {
-        drawNewTask(taskArchive[i]);
-
+function redrawChangedTaskList(taskList) {
+    clearThePage();
+    for (var i = 0; i < taskList.length; i++) {
+        drawNewTask(taskList[i]);
     }
 }
 
 function createNewTaskSource(task_definition) {
-    var taskPattern = {user_id: user_id, finished: 0, task_definition: task_definition};
-    return taskPattern;
+    return {finished: 0, task_definition: task_definition};
 }
 
 function drawNewTask(taskPattern) {
@@ -49,7 +43,6 @@ function drawNewTask(taskPattern) {
     var taskChangeField = createInputField(taskPattern);
     var del = createDeleteButton(taskPattern);
     createAndAppendOneTaskBody(checkbox, p, taskChangeField, del, taskPattern);
-    // reloadTaskCounter();
 }
 
 function createCheckBox(taskPattern) {
@@ -91,7 +84,6 @@ function createInputField(taskPattern) {
             case 13:
                 updateTaskDefinition(this);
                 this.style.display = 'none';
-                apllyChangesAndRedrawThePage();
                 break;
 
             case 27:
@@ -113,9 +105,7 @@ function createDeleteButton(taskPattern) {
     del.className = 'main-oneTask-delete_todo';
     del.id = 'del' + taskPattern.task_id;
     del.style.visibility = 'hidden';
-    del.addEventListener('click', function () {
-        removeTask(this.parentElement);
-    });
+    del.addEventListener('click', removeTask(this.parentElement);
     return del;
 }
 
@@ -127,27 +117,20 @@ function createAndAppendOneTaskBody(checkbox, p, taskChangeField, del, taskPatte
     div.appendChild(p);
     div.appendChild(taskChangeField);
     div.appendChild(del);
+    
     div.addEventListener('mouseover', function () {
         this.style.backgroundColor = '#e0cae9';
         var del = document.getElementById('del' + this.id);
         del.style.visibility = 'visible';
     });
+
     div.addEventListener('mouseout', function () {
         var del = document.getElementById('del' + this.id);
         del.style.visibility = 'hidden';
         this.style.backgroundColor = '#b9d2ff';
     });
+
     document.getElementById('taskList').appendChild(div);
-}
-
-function reloadTaskCounter() {
-    var data = {
-        user_id: user_id
-    };
-
-    $.post('/get_active_task_count', data, function(count) {
-        document.getElementById('taskCounter').innerHTML = 'Всего: ' + count;
-    })
 }
 
 function removeTask(taskElem) {
@@ -155,45 +138,16 @@ function removeTask(taskElem) {
         task_id: parseInt(taskElem.id)
     };
 
-    $.post('/remove_one_task', data, function() {
-        return apllyChangesAndRedrawThePage();
-    });
-}
-
-function getChangesFromServer() {
-
-    filterCondition = getFilterConditionFromServer(function(cond) {
-
-        var data = {
-            user_id: user_id,
-            filterCondition: cond
-        };  
-    
-        $.post('/get_all_tasks_according_to_filter', data, function(tasks) {
-            redrawTasksFromArchive(tasks);
-        });
-    });
-}
-
-function apllyChangesAndRedrawThePage() {
-    
-    getChangesFromServer();
-    // redrawTasksFromArchive();
-    reloadTaskCounter();
+    $.post('/remove_one_task', data, function(tasks), redrawChangedTaskList(tasks));
 }
 
 function removeAllFinishedTasks() {
-    var data = {
-        user_id: user_id
-    };
-
-    $.post('/remove_all_finished_tasks', data, function() {
-        return apllyChangesAndRedrawThePage();
-    });
+    $.post('/remove_all_finished_tasks', null, redrawChangedTaskList(tasks));
 }
 
 function addListenersToClearAllFinishedButton() {
     var clearAllFinishedButton = document.getElementsByClassName('footer-clearCompleted_todo')[0];
+
     clearAllFinishedButton.addEventListener('mouseover', function () {
         this.style.textDecoration = 'underline';
         this.style.cursor = 'pointer';
@@ -203,77 +157,42 @@ function addListenersToClearAllFinishedButton() {
         this.style.textDecoration = 'none';
     });
 
-    clearAllFinishedButton.addEventListener('click', function () {
-        return removeAllFinishedTasks();
-    });
-}
+    clearAllFinishedButton.addEventListener('click', redrawChangedTaskList(tasks));
+}();
 
-addListenersToClearAllFinishedButton();
 
 //footer-filter-active_todo
 document.getElementsByClassName('footer-filter-active_todo')[0].addEventListener('click', function () {
-    var data = {
-        user_id: user_id
-    };
-
-    $.post('/update_filter_condition_to_active', data, function() {
-        return apllyChangesAndRedrawThePage();
-    });
+    $.post('/update_filter_condition_to_active', null, redrawChangedTaskList(tasks));
 });
 
 //footer-filter-all_todo
 document.getElementsByClassName('footer-filter-all_todo')[0].addEventListener('click', function () {
-   var data = {
-        user_id: user_id
-    };
-
-    $.post('/update_filter_condition_to_all', data, function() {
-        return apllyChangesAndRedrawThePage();
-    });
+    $.post('/update_filter_condition_to_all', null, redrawChangedTaskList(tasks));
 });
 
 //footer-filter-completed_todo
 document.getElementsByClassName('footer-filter-completed_todo')[0].addEventListener('click', function () {
-    var data = {
-        user_id: user_id
-    };
-
-    $.post('/update_filter_condition_to_finished', data, function() {
-        return apllyChangesAndRedrawThePage();
-    });
+    $.post('/update_filter_condition_to_finished', null, redrawChangedTaskList(tasks));
 });
 
 //header-mark_todo
 document.getElementsByClassName('header-mark_todo')[0].addEventListener('click', function () {
    var status = this.checked ? 1 : 0;
    var data = {
-        user_id: user_id,
         status: status
    };
 
-   $.post('/reverse_finished_status_off_all', data, apllyChangesAndRedrawThePage());
+   $.post('/reverse_finished_status_off_all', data, redrawChangedTaskList(tasks));
 });
 
 function addNewTaskPatternAndGetIdForTask(taskPattern) {
     var data = {
-        user_id: user_id,
         finished: taskPattern.finished,
         task_definition: taskPattern.task_definition
     };
     
-    $.post('/add_new_task_and_get_id', data, function() {
-        apllyChangesAndRedrawThePage();
-    });
-}
-
-function getFilterConditionFromServer(callback) {
-    var data = {
-        user_id: user_id
-    };
-    
-    $.post('/get_filter_condition', data, function(cond) {
-         return callback(cond);
-    });
+    $.post('/add_new_task_and_get_id', data, redrawChangedTaskList(tasks));
 }
 
 function changeFinishedStatusOfOneTask(checkbox) {
@@ -283,10 +202,7 @@ function changeFinishedStatusOfOneTask(checkbox) {
         finished: status
     };
 
-    $.post('/update_finished_status_of_one_task', data, function() {
-        return apllyChangesAndRedrawThePage();
-    });
-}
+    $.post('/update_finished_status_of_one_task', data, redrawChangedTaskList(tasks));
 
 function updateTaskDefinition(inputField) {
     var data = {
@@ -294,9 +210,7 @@ function updateTaskDefinition(inputField) {
         task_definition: inputField.value
     };
 
-    $.post('/update_task_definition', data, function() {
-        return apllyChangesAndRedrawThePage();
-    });
+    $.post('/update_task_definition', data, redrawChangedTaskList(tasks));
 }
 
 function getCookie(name) {
