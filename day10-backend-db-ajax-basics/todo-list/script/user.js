@@ -1,4 +1,28 @@
-redrawChangedTaskList();
+switch(getCookie('filter')) {
+    case 0:
+        $.post('/update_filter_condition_to_active', null, function(tasks) {
+            return redrawChangedTaskList(tasks);
+        });
+        break
+    
+    case 1:
+        $.post('/update_filter_condition_to_finished', null, function(tasks) {
+            return redrawChangedTaskList(tasks);
+        });
+        break
+
+    case 2:
+        $.post('/update_filter_condition_to_all', null, function(tasks) {
+            return redrawChangedTaskList(tasks);
+        });
+
+    default:
+        $.post('/update_filter_condition_to_all', null, function(tasks) {
+            return redrawChangedTaskList(tasks);
+        });
+}
+
+reloadTaskCounter();
 
 document.getElementById('addNewTask').focus();
 
@@ -105,7 +129,9 @@ function createDeleteButton(taskPattern) {
     del.className = 'main-oneTask-delete_todo';
     del.id = 'del' + taskPattern.task_id;
     del.style.visibility = 'hidden';
-    del.addEventListener('click', removeTask(this.parentElement);
+    del.addEventListener('click', function() {
+        removeTask(this.parentElement)
+    });
     return del;
 }
 
@@ -138,14 +164,19 @@ function removeTask(taskElem) {
         task_id: parseInt(taskElem.id)
     };
 
-    $.post('/remove_one_task', data, function(tasks), redrawChangedTaskList(tasks));
+    $.post('/remove_one_task', data, function(tasks) {
+        redrawChangedTaskList(tasks);
+        reloadTaskCounter();
+    });
 }
 
 function removeAllFinishedTasks() {
-    $.post('/remove_all_finished_tasks', null, redrawChangedTaskList(tasks));
+    $.post('/remove_all_finished_tasks', null, function(tasks) {
+        redrawChangedTaskList(tasks);
+    });
 }
 
-function addListenersToClearAllFinishedButton() {
+(function addListenersToClearAllFinishedButton() {
     var clearAllFinishedButton = document.getElementsByClassName('footer-clearCompleted_todo')[0];
 
     clearAllFinishedButton.addEventListener('mouseover', function () {
@@ -157,23 +188,31 @@ function addListenersToClearAllFinishedButton() {
         this.style.textDecoration = 'none';
     });
 
-    clearAllFinishedButton.addEventListener('click', redrawChangedTaskList(tasks));
-}();
+    clearAllFinishedButton.addEventListener('click', function(tasks) {
+        removeAllFinishedTasks();
+    });
+})();
 
 
 //footer-filter-active_todo
 document.getElementsByClassName('footer-filter-active_todo')[0].addEventListener('click', function () {
-    $.post('/update_filter_condition_to_active', null, redrawChangedTaskList(tasks));
+    $.post('/update_filter_condition_to_active', null, function(tasks) {
+        redrawChangedTaskList(tasks);
+    });
 });
 
 //footer-filter-all_todo
 document.getElementsByClassName('footer-filter-all_todo')[0].addEventListener('click', function () {
-    $.post('/update_filter_condition_to_all', null, redrawChangedTaskList(tasks));
+    $.post('/update_filter_condition_to_all', null, function(tasks) {
+        redrawChangedTaskList(tasks);
+    });
 });
 
 //footer-filter-completed_todo
 document.getElementsByClassName('footer-filter-completed_todo')[0].addEventListener('click', function () {
-    $.post('/update_filter_condition_to_finished', null, redrawChangedTaskList(tasks));
+    $.post('/update_filter_condition_to_finished', null, function(tasks) {
+        redrawChangedTaskList(tasks);
+    });
 });
 
 //header-mark_todo
@@ -183,7 +222,10 @@ document.getElementsByClassName('header-mark_todo')[0].addEventListener('click',
         status: status
    };
 
-   $.post('/reverse_finished_status_off_all', data, redrawChangedTaskList(tasks));
+   $.post('/reverse_finished_status_off_all', data, function(tasks) {
+        redrawChangedTaskList(tasks);
+        reloadTaskCounter();
+   });
 });
 
 function addNewTaskPatternAndGetIdForTask(taskPattern) {
@@ -192,7 +234,10 @@ function addNewTaskPatternAndGetIdForTask(taskPattern) {
         task_definition: taskPattern.task_definition
     };
     
-    $.post('/add_new_task_and_get_id', data, redrawChangedTaskList(tasks));
+    $.post('/add_new_task_and_get_id', data, function(tasks) {
+        redrawChangedTaskList(tasks);
+        reloadTaskCounter();
+    });
 }
 
 function changeFinishedStatusOfOneTask(checkbox) {
@@ -202,7 +247,11 @@ function changeFinishedStatusOfOneTask(checkbox) {
         finished: status
     };
 
-    $.post('/update_finished_status_of_one_task', data, redrawChangedTaskList(tasks));
+    $.post('/update_finished_status_of_one_task', data, function(tasks) {
+        redrawChangedTaskList(tasks);
+        reloadTaskCounter();
+    });
+}
 
 function updateTaskDefinition(inputField) {
     var data = {
@@ -210,11 +259,17 @@ function updateTaskDefinition(inputField) {
         task_definition: inputField.value
     };
 
-    $.post('/update_task_definition', data, redrawChangedTaskList(tasks));
+    $.post('/update_task_definition', data, function(tasks) {
+        redrawChangedTaskList(tasks)
+    });
 }
 
 function getCookie(name) {
   var value = "; " + document.cookie;
   var parts = value.split("; " + name + "=");
   if (parts.length == 2) return parts.pop().split(";").shift();
+}
+
+function reloadTaskCounter() {
+    document.getElementById('taskCounter').innerHTML = 'remain ' + getCookie('count');
 }
