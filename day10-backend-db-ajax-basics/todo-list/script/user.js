@@ -1,17 +1,19 @@
+console.log(document.cookie);
+console.log(getCookie('filter'));
 switch(getCookie('filter')) {
-    case 0:
+    case '0':
         $.post('/update_filter_condition_to_active', null, function(tasks) {
             return redrawChangedTaskList(tasks);
         });
         break
     
-    case 1:
+    case '1':
         $.post('/update_filter_condition_to_finished', null, function(tasks) {
             return redrawChangedTaskList(tasks);
         });
         break
 
-    case 2:
+    case '2':
         $.post('/update_filter_condition_to_all', null, function(tasks) {
             return redrawChangedTaskList(tasks);
         });
@@ -211,6 +213,7 @@ document.getElementsByClassName('footer-filter-all_todo')[0].addEventListener('c
 //footer-filter-completed_todo
 document.getElementsByClassName('footer-filter-completed_todo')[0].addEventListener('click', function () {
     $.post('/update_filter_condition_to_finished', null, function(tasks) {
+        console.log(document.cookie);
         redrawChangedTaskList(tasks);
     });
 });

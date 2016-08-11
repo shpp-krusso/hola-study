@@ -20,6 +20,7 @@ app.get('/', function (req, res) {
 		res.redirect('/todo');
 	} else {	
 	app.use(express.static(__dirname + '/authorization/'));
+
     res.sendFile(__dirname + '/authorization/index.html');
 	}
 });
@@ -28,6 +29,10 @@ app.get('/todo', function (req, res) {
 	if(!req.cookies.user_id) {
 		res.redirect('/');
 	}
+	// var queryString = "SELECT filter_condition FROM users WHERE user_id = " + req.cookies.user_id;
+	// mySqlQuery(queryString, function(data) {
+	// 	res.cookie('filter', data[0]["filter_condition"])
+	// });
 	app.use(express.static(__dirname + '/todo-list/'));
     res.sendFile(__dirname + '/todo-list/index.html');
 });
@@ -36,20 +41,24 @@ app.post('/login', function (req, res) {
     var queryString = "SELECT password, user_id, filter_condition FROM users WHERE user_name = '" + req.body.user_name + "'";
    
     mySqlQuery(queryString, function (data) {
-
-        if (req.body.password == data[0]["password"]) {
-        	console.log('login');
-            res.cookie('user_id', data[0]["user_id"]);
-            res.cookie('filter', data[0]["filter_condition"]);
-
-            getActiveTasksCountAndWriteToCookies(data[0]["user_id"], function(count) { 	
-            res.cookie('count', count);
-            res.send('ok');
-            });
-
-        } else {
-            res.send('password_does_not_match');
-        }
+ 	   	if (data.length) {	
+ 	       if (req.body.password == data[0]["password"]) {
+ 	       	console.log('login');
+ 	           res.cookie('user_id', data[0]["user_id"]);
+	 	           res.cookie('filter', data[0]["filter_condition"]);
+	
+	 	           getActiveTasksCountAndWriteToCookies(data[0]["user_id"], function(count) { 	
+	 	           res.cookie('count', count);
+	 	           res.send('ok');
+	 	           });
+	
+	 	       } else {
+	 	           res.send('password_does_not_match');
+	 	       }
+	
+ 	   	} else {
+    		res.send('password_does_not_match');
+    	}
     });
 });
 
@@ -97,29 +106,29 @@ app.post('/remove_all_finished_tasks', function (req, res) {
 });
 
 app.post('/update_filter_condition_to_active', function (req, res) {
-    var queryString = '' + "UPDATE users SET filter_condition = '0' WHERE user_id = " + req.cookies.user_id;
-    res.cookie('filter', 0);
+    var queryString = '' + "UPDATE users SET filter_condition = 0 WHERE user_id = " + req.cookies.user_id;
     mySqlQuery(queryString, function(data){});
-    selectAllTaskAccordingToFilter(req.cookies.user_id, '0', function(tasks) {
+    selectAllTaskAccordingToFilter(req.cookies.user_id, 0, function(tasks) {
+    	res.cookie('filter', 0);
     	res.send(tasks);
     });
 });
 
 app.post('/update_filter_condition_to_all', function (req, res) { 
-	var queryString = "UPDATE users SET filter_condition = '2' WHERE user_id = " + req.cookies.user_id;
-    res.cookie('filter', 2);
+	var queryString = "UPDATE users SET filter_condition = 2 WHERE user_id = " + req.cookies.user_id;
     mySqlQuery(queryString, function(data){});
-    selectAllTaskAccordingToFilter(req.cookies.user_id, '2', function(tasks) {
+    selectAllTaskAccordingToFilter(req.cookies.user_id, 2, function(tasks) {
+    	res.cookie('filter', 2);
     	res.send(tasks);
     });
 });
 
 app.post('/update_filter_condition_to_finished', function (req, res) {
-    var queryString = "UPDATE users SET filter_condition = '1' WHERE user_id = " + req.cookies.user_id;
-    res.cookie('filter', 1);
+    var queryString = "UPDATE users SET filter_condition = 1 WHERE user_id = " + req.cookies.user_id;
     mySqlQuery(queryString, function(data){});
-    selectAllTaskAccordingToFilter(req.cookies.user_id, '1', function(tasks) {
-    	res.send(tasks);
+    selectAllTaskAccordingToFilter(req.cookies.user_id, 1, function(tasks) {
+    	res.cookie('filter', 1);
+       	res.send(tasks);
     });
 });
 
