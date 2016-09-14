@@ -1,10 +1,1 @@
-
-
-!*.js
-!*.json
-!*.html
-!*.css
-!*.jpg
-!*.jpeg
-!*.png
-!*.bmp
+/node_modules
