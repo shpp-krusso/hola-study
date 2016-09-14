@@ -3,7 +3,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
 app.get('/', function (req, res) {
-    res.sendFile('/home/kocmuk/hola-study/day5-nodejs-basics/chat-socket/index.html');
+    res.sendFile(__dirname + '/index.html');
 });
 
 var nicknamesById = [];
