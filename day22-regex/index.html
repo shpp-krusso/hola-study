@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="css\style.css">
+    <script src="js/regex_checker.js"></script>
+</head>
+<body>
+<input type="text" placeholder="regexp" class="regexp" onchange="getHighlightingText(this.value)">
+<input type="text" placeholder="flag" class="flag" onchange="getHighlightingText(this.value)">
+<div class="result" onclick="hideDiv(this)">
+    <p class="resultP"></p>
+</div>
+<textarea class="textarea" onblur="setStringToRegex(this)"></textarea>
+</body>
+</html>
